@@ -97,6 +97,30 @@ namespace FanCtrl
                 mIsSendCustomData = (mCustomDataList.Count > 0);
             }
 
+            if (mUSBController.ProductID == USBProductID.KrakenX3)
+            {
+                var commandList = new List<byte>();
+                commandList.Add(0x70);
+                commandList.Add(0x02);
+                commandList.Add(0x01);
+                commandList.Add(0xb8);
+                commandList.Add(0x0b);
+                for (int i = 0; i < 0x40 - 5; i++)
+                {
+                    commandList.Add(0x00);
+                }
+                mUSBController.send(commandList.ToArray()); 
+
+                commandList = new List<byte>();
+                commandList.Add(0x70);
+                commandList.Add(0x01);
+                for (int i = 0; i < 0x40 - 2; i++)
+                {
+                    commandList.Add(0x00);
+                }
+                mUSBController.send(commandList.ToArray());
+            }
+
             mTimer.Interval = 1000;
             mTimer.Elapsed += onTimer;
             mTimer.Start();
