@@ -312,6 +312,14 @@ namespace FanCtrl
                 catch { }
             }
 
+            // Motherboard temperature
+            this.createMotherBoardTemp();
+
+            // GPU
+            this.createGPUTemp();
+            this.createGPUFan();
+            this.createGPUControl();
+
             // DIMM thermal sensor
             if (OptionManager.getInstance().IsDimm == true)
             {
@@ -346,14 +354,6 @@ namespace FanCtrl
                 }
                 this.unlockSMBus();
             }            
-
-            // Motherboard temperature
-            this.createMotherBoardTemp();
-
-            // GPU
-            this.createGPUTemp();
-            this.createGPUFan();
-            this.createGPUControl();
 
             // osd sensor
             this.createOSDSensor();
