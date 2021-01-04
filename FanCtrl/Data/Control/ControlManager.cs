@@ -397,8 +397,15 @@ namespace FanCtrl
                         var sensorList = nameObject.Value<JArray>("sensor");
                         for(int i = 0; i <sensorList.Count; i++)
                         {
-                            var nameString = sensorList[i].Value<string>();
-                            mSensorNameList[i] = nameString;
+                            try
+                            {
+                                var nameString = sensorList[i].Value<string>();
+                                mSensorNameList[i] = nameString;
+                            }
+                            catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentOutOfRangeException)
+                            {
+                                break;
+                            }
                         }
                     }
 
