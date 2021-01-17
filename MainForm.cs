@@ -97,8 +97,8 @@ namespace FanCtrl
 
         private void localizeComponent()
         {
-            this.Text = StringLib.Title + " v" + Application.ProductVersion;
-            mTrayIcon.Text = StringLib.Title + " v" + Application.ProductVersion;
+            this.Text = StringLib.Title + " v" + Application.ProductVersion + " (modified by deVbug)";
+            mTrayIcon.Text = StringLib.Title + " v" + Application.ProductVersion + " (modified by deVbug)";
             mTempGroupBox.Text = StringLib.Temperature;
             mFanGroupBox.Text = StringLib.Fan_speed;
             mControlGroupBox.Text = StringLib.Fan_control;
