@@ -16,7 +16,7 @@ namespace FanCtrl
     {
         // HidDevice
         private HidStream mHidStream = null;
-        private bool mIsStart = false;
+        private bool mIsOpen = false;
 
         private delegate void RecvDelegate();
         private delegate void SendDelegate();
@@ -70,50 +70,43 @@ namespace FanCtrl
                                 this.stop();
                                 return false;
                             }
-
-                            mIsStart = true;
-                            mHidStream.ReadTimeout = 5000;
-                            this.readAsync();
-                            return true;
+                            mIsOpen = true;
+                            break;
                         }
                         i++;
                     }
                 }
+
+                this.readAsync();
             }
             catch (Exception e)
             {
-                Console.WriteLine("HidUSBController.start() : Failed catch\nerror : {0}", e.Message);                
+                Console.WriteLine("HidUSBController.start() : Failed catch\nerror : {0}", e.Message);
+                this.stop();
+                return false;
             }
-            this.stop();
-            return false;
+            return true;
         }
 
         public override void stop()
         {
             try
             {
-                mIsStart = false;
+                mIsOpen = false;
                 if (mHidStream != null)
                 {
                     mHidStream.Close();
-                    mHidStream = null;
                 }
             }
             catch { }
 
-            Monitor.Enter(mSendArrayListLock);
-            mIsSend = false;
-            mSendArrayList.Clear();
-            Monitor.Exit(mSendArrayListLock);
-        }
-
-        private void restart()
-        {
-            if (mIsStart == true)
+            try
             {
-                this.stop();
-                this.start(mIndex);
+                Monitor.Enter(mSendArrayListLock);
+                mSendArrayList.Clear();
+                Monitor.Exit(mSendArrayListLock);
             }
+            catch { }
         }
 
         public override void send(byte[] buffer)
@@ -149,46 +142,28 @@ namespace FanCtrl
 
         private void read()
         {
-            if (mIsStart == false)
+            if (mIsOpen == false)
                 return;
 
             try
             {
                 if (mHidStream != null && mHidStream.CanRead == true)
                 {
-                    try
-                    {
-                        var buffer = mHidStream.Read();
-                        if (buffer != null)
-                        {
-                            this.onRecv(buffer, buffer.Length);
-                        }
-                    }
-                    catch (TimeoutException)
-                    {
-                        Thread.Sleep(100);
-                    }
-                    catch 
-                    {
-                        this.restart();
-                        return;
-                    }
+                    var buffer = mHidStream.Read();
+                    this.onRecv(buffer, buffer.Length);
+                    this.readAsync();
+                }
+                else
+                {
+                    this.readAsync();
                 }
             }
-            catch
-            {
-                this.restart();
-                return;
-            }
-
-            this.readAsync();
+            catch { }
         }
 
         private async void writeAsync()
         {
-            Monitor.Enter(mSendArrayListLock);
             mIsSend = true;
-            Monitor.Exit(mSendArrayListLock);
             var sendDelegate = new SendDelegate(write);
             await Task.Factory.FromAsync(sendDelegate.BeginInvoke, sendDelegate.EndInvoke, null);
         }
@@ -208,8 +183,11 @@ namespace FanCtrl
             }
             catch
             {
+                mSendArrayList.Clear();
+                mIsSend = false;
                 Monitor.Exit(mSendArrayListLock);
-                this.restart();
+                this.stop();
+                this.start(mIndex);
                 return;
             }
             mSendArrayList.Clear();
