@@ -1032,10 +1032,17 @@ namespace FanCtrl
             if (wordArray != null && wordArray.Length == 10)
             {
                 var temp = BitConverter.GetBytes(wordArray[5]);
+                var negative = (temp[1] & 0x10) != 0;
+                if (negative)
+                {
+                    temp[0] = (byte)(~temp[0]);
+                    temp[1] = (byte)(~temp[1]);
+                }
                 temp[1] = (byte)(temp[1] & 0x0F);
 
                 ushort count = BitConverter.ToUInt16(temp, 0);
-                double value = Math.Round(count * 0.0625f);
+                if (negative) count++;
+                double value = Math.Round(count * 0.0625f) * (negative ? -1 : 1);
                 if(value > 0)
                 {
                     sensor.Value = (int)value;
